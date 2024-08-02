@@ -2,28 +2,37 @@
 
 ```mermaid
 graph TD
-    A[Start] --> B{Native lazy loading supported?}
-    B -->|Yes| C[Use native lazy loading]
-    B -->|No| D[Load IntersectionObserver]
-    D --> E{IntersectionObserver available?}
-    E -->|Yes| F[Use IntersectionObserver]
-    E -->|No| G[Load immediately]
-    C --> H{Low bandwidth?}
-    F --> H
-    G --> H
-    H -->|Yes| I[Use low-res image]
-    H -->|No| J{WebP supported?}
-    I --> K[Load image]
-    J -->|Yes| L[Use WebP image]
-    J -->|No| M[Use original format]
-    L --> K
-    M --> K
-    K --> N{Loading successful?}
-    N -->|Yes| O[Display image]
-    N -->|No| P{Retry attempts left?}
-    P -->|Yes| Q[Wait and retry]
-    P -->|No| R[Show error]
-    Q --> K
-    O --> S[End]
-    R --> S
+    A[Start] --> B{Is image visible?}
+    B -->|Yes| C{Is 'loading' in HTMLImageElement.prototype?}
+    B -->|No| D[Use IntersectionObserver]
+    C -->|Yes| E[Use native lazy loading]
+    C -->|No| D
+    D --> F{Is image in viewport?}
+    F -->|Yes| G[Start loading image]
+    F -->|No| H[Wait for image to enter viewport]
+    H --> G
+    E --> G
+    G --> I{Is low bandwidth?}
+    I -->|Yes| J[Use lowResSrc]
+    I -->|No| K{Is WebP supported?}
+    K -->|Yes| L[Use webpSrc]
+    K -->|No| M[Use src]
+    J --> N[Start progressive loading]
+    L --> N
+    M --> N
+    N --> O{Image loaded successfully?}
+    O -->|Yes| P[Display image]
+    O -->|No| Q{Retry count < limit?}
+    Q -->|Yes| R[Increment retry count]
+    Q -->|No| S[Display error]
+    R --> T[Wait for retry delay]
+    T --> U{Is current src WebP?}
+    U -->|Yes| V[Try JPG or PNG]
+    U -->|No| W{Is current src JPG?}
+    W -->|Yes| X[Try PNG]
+    W -->|No| S
+    V --> G
+    X --> G
+    P --> Y[End]
+    S --> Y
 ```
